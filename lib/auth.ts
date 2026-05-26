@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import type { NextRequest } from "next/server";
 import crypto from "crypto";
 import { readPrivateJson, writePrivateJson } from "./storage";
 
@@ -178,6 +179,10 @@ export function sessionCookieName(): string {
 
 export function sessionMaxAgeSeconds(): number {
   return SESSION_TTL_MS / 1000;
+}
+
+export function shouldUseSecureSessionCookie(req: NextRequest): boolean {
+  return req.nextUrl.protocol === "https:" || req.headers.get("x-forwarded-proto") === "https";
 }
 
 export async function getUserProgress(userId: string): Promise<ReadingProgress[]> {
