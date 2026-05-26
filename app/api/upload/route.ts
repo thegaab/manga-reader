@@ -4,7 +4,7 @@ import path from "path";
 import { v4 as uuidv4 } from "uuid";
 import { zipToImages, uploadedImagesToPages } from "@/lib/image-upload";
 import { pdfToImages } from "@/lib/pdf";
-import { addManga } from "@/lib/store";
+import { addManga, addSeries, getSeries, updateSeries } from "@/lib/store";
 import {
   getStorageDriver,
   publicUrlForKey,
@@ -35,6 +35,9 @@ export async function POST(req: NextRequest) {
       .getAll("images")
       .filter((value): value is File => value instanceof File);
     const title = (formData.get("title") as string) || "Sem titulo";
+    const rawSeriesId = String(formData.get("seriesId") || "");
+    const rawSeriesTitle = String(formData.get("seriesTitle") || "").trim();
+    const seriesCover = formData.get("seriesCover") as File | null;
     const pagesDir = path.join(tempDir, "pages");
 
     let pageCount = 0;
@@ -68,17 +71,46 @@ export async function POST(req: NextRequest) {
     }
 
     const pageKeys = await uploadPagesFromDirectory(id, pagesDir);
+    let seriesId = rawSeriesId;
+    let series = seriesId ? await getSeries(seriesId) : null;
+    const now = new Date().toISOString();
+
+    if (!series && rawSeriesTitle) {
+      seriesId = uuidv4();
+      let coverPage = publicUrlForKey(pageKeys[0]);
+
+      if (seriesCover && seriesCover.size > 0) {
+        const extension = seriesCover.name.toLowerCase().match(/\.(png|jpe?g|webp)$/)?.[1] || "png";
+        const coverKey = `mangas/series/${seriesId}/cover.${extension}`;
+        await uploadObject(coverKey, Buffer.from(await seriesCover.arrayBuffer()), seriesCover.type || "image/png");
+        coverPage = publicUrlForKey(coverKey);
+      }
+
+      series = {
+        id: seriesId,
+        title: rawSeriesTitle,
+        coverPage,
+        createdAt: now,
+        updatedAt: now,
+      };
+      await addSeries(series);
+    }
+
     const manga = {
       id,
+      seriesId: series?.id,
       title,
       pages: pageCount,
-      uploadedAt: new Date().toISOString(),
+      uploadedAt: now,
       coverPage: publicUrlForKey(pageKeys[0]),
       pdfPath: sourcePdfKey ? publicUrlForKey(sourcePdfKey) : "",
       storage: getStorageDriver(),
     };
 
     await addManga(manga);
+    if (series && !series.coverPage) {
+      await updateSeries({ ...series, coverPage: manga.coverPage, updatedAt: now });
+    }
 
     return NextResponse.json({ success: true, manga });
   } catch (err) {

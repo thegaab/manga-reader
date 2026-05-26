@@ -6,10 +6,19 @@ import { useRouter } from "next/navigation";
 
 interface Manga {
   id: string;
+  seriesId?: string;
   title: string;
   pages: number;
   uploadedAt: string;
   coverPage: string;
+}
+
+interface MangaSeries {
+  id: string;
+  title: string;
+  coverPage: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface History {
@@ -47,6 +56,7 @@ interface DroppedDirectoryEntry extends DroppedEntry {
 export default function Home() {
   const router = useRouter();
   const [mangas, setMangas] = useState<Manga[]>([]);
+  const [series, setSeries] = useState<MangaSeries[]>([]);
   const [search, setSearch] = useState("");
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState("");
@@ -59,7 +69,11 @@ export default function Home() {
   const [dragOver, setDragOver] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
+  const [selectedSeriesCover, setSelectedSeriesCover] = useState<File | null>(null);
   const [titleInput, setTitleInput] = useState("");
+  const [seriesMode, setSeriesMode] = useState<"existing" | "new">("existing");
+  const [selectedSeriesId, setSelectedSeriesId] = useState("");
+  const [seriesTitleInput, setSeriesTitleInput] = useState("");
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
@@ -74,7 +88,7 @@ export default function Home() {
 
       const meData = await meRes.json();
       setUser(meData.user);
-      await Promise.all([fetchMangas(), fetchProgress()]);
+      await Promise.all([fetchMangas(), fetchSeries(), fetchProgress()]);
       setAuthLoading(false);
     }
 
@@ -85,6 +99,13 @@ export default function Home() {
     const res = await fetch("/api/manga");
     const data = await res.json();
     setMangas(data);
+  }
+
+  async function fetchSeries() {
+    const res = await fetch("/api/series");
+    const data = await res.json();
+    setSeries(data);
+    setSelectedSeriesId((current) => current || data[0]?.id || "");
   }
 
   async function fetchProgress() {
@@ -106,6 +127,13 @@ export default function Home() {
     setUploadProgress(uploadMode === "pdf" ? "Enviando PDF..." : "Enviando imagens...");
     const formData = new FormData();
     formData.append("title", titleInput || selectedFile?.name.replace(/\.(pdf|zip)$/i, "") || "Sem titulo");
+    if (seriesMode === "existing" && selectedSeriesId) {
+      formData.append("seriesId", selectedSeriesId);
+    }
+    if (seriesMode === "new") {
+      formData.append("seriesTitle", seriesTitleInput);
+      if (selectedSeriesCover) formData.append("seriesCover", selectedSeriesCover);
+    }
 
     if (uploadMode === "pdf" && selectedFile) {
       formData.append("pdf", selectedFile);
@@ -121,7 +149,7 @@ export default function Home() {
       const data = await res.json();
       if (data.success) {
         setUploadProgress("Concluido!");
-        await fetchMangas();
+        await Promise.all([fetchMangas(), fetchSeries()]);
         closeUploadModal();
       } else {
         setUploadProgress("Erro: " + data.error);
@@ -143,7 +171,9 @@ export default function Home() {
     setShowUploadModal(false);
     setSelectedFile(null);
     setSelectedImages([]);
+    setSelectedSeriesCover(null);
     setTitleInput("");
+    setSeriesTitleInput("");
     setUploadProgress("");
   }
 
@@ -224,7 +254,9 @@ export default function Home() {
     setUploadProgress("");
   }
 
-  const filtered = mangas.filter((m) => m.title.toLowerCase().includes(search.toLowerCase()));
+  const filteredSeries = series.filter((item) => item.title.toLowerCase().includes(search.toLowerCase()));
+  const looseMangas = mangas.filter((manga) => !manga.seriesId);
+  const filteredLooseMangas = looseMangas.filter((m) => m.title.toLowerCase().includes(search.toLowerCase()));
   const totalPages = mangas.reduce((a, m) => a + m.pages, 0);
   const activeReads = Object.keys(history).length;
   const canManageMangas = user?.role === "admin";
@@ -298,7 +330,7 @@ export default function Home() {
 
         <section className="stats-strip">
           {[
-            { val: mangas.length, label: "Mangas", hint: "na sua colecao" },
+            { val: series.length, label: "Series", hint: "na sua colecao" },
             { val: totalPages, label: "Paginas totais", hint: "adicionadas" },
             { val: activeReads, label: "Em leitura", hint: "em progresso" },
           ].map((s) => (
@@ -310,14 +342,36 @@ export default function Home() {
           ))}
         </section>
 
-        {filtered.length === 0 && search ? (
+        {filteredSeries.length === 0 && filteredLooseMangas.length === 0 && search ? (
           <div className="empty-state">
             <div>Nenhum resultado</div>
             <span>Tente outra busca</span>
           </div>
         ) : (
           <div className="manga-grid">
-            {filtered.map((manga) => {
+            {filteredSeries.map((item) => {
+              const chapters = mangas.filter((manga) => manga.seriesId === item.id);
+              const pageCount = chapters.reduce((sum, manga) => sum + manga.pages, 0);
+              return (
+                <div key={item.id} className="manga-card-wrapper">
+                  <Link href={"/series/" + item.id} style={{ textDecoration: "none" }}>
+                    <div className="manga-card">
+                      <div className="manga-cover">
+                        {item.coverPage ? <img src={item.coverPage} alt={item.title} /> : <div className="cover-placeholder">{item.title.slice(0, 1)}</div>}
+                      </div>
+                      <div className="manga-info">
+                        <div>{item.title}</div>
+                        <p>
+                          <span>{chapters.length} cap.</span>
+                          <span>{pageCount}p</span>
+                        </p>
+                      </div>
+                    </div>
+                  </Link>
+                </div>
+              );
+            })}
+            {filteredLooseMangas.map((manga) => {
               const h = history[manga.id];
               const progress = h ? Math.round((h.page / manga.pages) * 100) : 0;
               return (
@@ -414,6 +468,36 @@ export default function Home() {
             <input className="title-input" type="text" placeholder="Titulo do manga" value={titleInput}
               onChange={(e) => setTitleInput(e.target.value)}
             />
+            <div className="series-picker">
+              <div className="upload-tabs">
+                <button type="button" onClick={() => setSeriesMode("existing")} className={seriesMode === "existing" ? "active" : ""}>
+                  Serie existente
+                </button>
+                <button type="button" onClick={() => setSeriesMode("new")} className={seriesMode === "new" ? "active" : ""}>
+                  Nova serie
+                </button>
+              </div>
+              {seriesMode === "existing" ? (
+                <select className="title-input" value={selectedSeriesId} onChange={(e) => setSelectedSeriesId(e.target.value)}>
+                  <option value="">Sem serie</option>
+                  {series.map((item) => (
+                    <option key={item.id} value={item.id}>{item.title}</option>
+                  ))}
+                </select>
+              ) : (
+                <div className="new-series-fields">
+                  <input className="title-input" type="text" placeholder="Nome da serie" value={seriesTitleInput}
+                    onChange={(e) => setSeriesTitleInput(e.target.value)}
+                  />
+                  <label className="cover-input">
+                    <span>{selectedSeriesCover ? selectedSeriesCover.name : "Selecionar capa da serie"}</span>
+                    <input type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                      onChange={(e) => setSelectedSeriesCover(e.target.files?.[0] || null)}
+                    />
+                  </label>
+                </div>
+              )}
+            </div>
             {uploading && <div className="upload-status">{uploadProgress}</div>}
             <div className="modal-actions">
               <button onClick={closeUploadModal} disabled={uploading}>Cancelar</button>

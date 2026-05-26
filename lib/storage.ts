@@ -9,11 +9,14 @@ import {
 } from "@aws-sdk/client-s3";
 import { Readable } from "stream";
 import type { Manga } from "./store";
+import type { MangaSeries } from "./store";
 
 const LOCAL_MANGAS_DIR = path.join(process.cwd(), "public", "mangas");
 const LOCAL_DATA_FILE = path.join(LOCAL_MANGAS_DIR, "data.json");
+const LOCAL_SERIES_FILE = path.join(LOCAL_MANGAS_DIR, "series.json");
 const LOCAL_PRIVATE_DIR = path.join(process.cwd(), ".data");
 const DATA_KEY = "mangas/data.json";
+const SERIES_KEY = "mangas/series.json";
 
 export type StorageDriver = "local" | "s3";
 
@@ -121,6 +124,51 @@ export async function writeMangaCatalog(mangas: Manga[]): Promise<void> {
     new PutObjectCommand({
       Bucket: getBucketName(),
       Key: getS3Key(DATA_KEY),
+      Body: body,
+      ContentType: "application/json; charset=utf-8",
+    })
+  );
+}
+
+export async function readSeriesCatalog(): Promise<MangaSeries[]> {
+  if (getStorageDriver() === "local") {
+    if (!fs.existsSync(LOCAL_MANGAS_DIR)) fs.mkdirSync(LOCAL_MANGAS_DIR, { recursive: true });
+    if (!fs.existsSync(LOCAL_SERIES_FILE)) return [];
+    try {
+      return JSON.parse(fs.readFileSync(LOCAL_SERIES_FILE, "utf-8"));
+    } catch {
+      return [];
+    }
+  }
+
+  try {
+    const res = await getS3Client().send(
+      new GetObjectCommand({
+        Bucket: getBucketName(),
+        Key: getS3Key(SERIES_KEY),
+      })
+    );
+    return JSON.parse(await streamToString(res.Body));
+  } catch (err) {
+    const error = err as { name?: string; $metadata?: { httpStatusCode?: number } };
+    if (error.name === "NoSuchKey" || error.$metadata?.httpStatusCode === 404) return [];
+    throw err;
+  }
+}
+
+export async function writeSeriesCatalog(series: MangaSeries[]): Promise<void> {
+  const body = JSON.stringify(series, null, 2);
+
+  if (getStorageDriver() === "local") {
+    if (!fs.existsSync(LOCAL_MANGAS_DIR)) fs.mkdirSync(LOCAL_MANGAS_DIR, { recursive: true });
+    fs.writeFileSync(LOCAL_SERIES_FILE, body);
+    return;
+  }
+
+  await getS3Client().send(
+    new PutObjectCommand({
+      Bucket: getBucketName(),
+      Key: getS3Key(SERIES_KEY),
       Body: body,
       ContentType: "application/json; charset=utf-8",
     })

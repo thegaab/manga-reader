@@ -336,6 +336,17 @@ button, input {
   object-fit: cover;
 }
 
+.cover-placeholder {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  color: var(--accent2);
+  background: #202026;
+  font-family: var(--font-display), sans-serif;
+  font-size: 3rem;
+}
+
 .manga-progress {
   position: absolute;
   left: 0;
@@ -522,6 +533,74 @@ button, input {
 
 .upload-status {
   margin: 0.75rem 0 0;
+}
+
+.series-picker {
+  margin-top: 1rem;
+}
+
+.new-series-fields {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.cover-input {
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  padding: 0 1rem;
+  border: 1px dashed rgba(255,255,255,0.16);
+  border-radius: 14px;
+  color: var(--text-muted);
+  background: #131316;
+  cursor: pointer;
+}
+
+.cover-input input {
+  display: none;
+}
+
+.series-hero {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  margin-bottom: 1.25rem;
+  padding: 1.25rem;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 20px;
+  background: #17171b;
+}
+
+.series-cover {
+  width: 132px;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  border-radius: 16px;
+  background: #202026;
+  flex-shrink: 0;
+}
+
+.series-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.series-hero h1 {
+  margin: 0.35rem 0;
+  font-size: 2rem;
+  line-height: 1.1;
+}
+
+.series-hero p,
+.back-link {
+  color: var(--text-muted);
+}
+
+.back-link {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.8rem;
+  text-decoration: none;
 }
 
 .modal-actions {
@@ -876,6 +955,18 @@ button, input {
   .upload-tabs,
   .modal-actions {
     flex-direction: column;
+  }
+
+  .series-hero {
+    align-items: flex-start;
+  }
+
+  .series-cover {
+    width: 94px;
+  }
+
+  .series-hero h1 {
+    font-size: 1.55rem;
   }
 }
 
