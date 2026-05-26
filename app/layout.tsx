@@ -21,8 +21,8 @@ const monoFont = Space_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MangaShelf — Leitor de Mangá",
-  description: "Faça upload e leia seus mangás em PDF",
+  title: "MangaKai 漫画会 — Leitor de Manga",
+  description: "Faca upload e leia seus mangas em PDF",
 };
 
 export const viewport: Viewport = {

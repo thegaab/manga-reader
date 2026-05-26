@@ -12,6 +12,7 @@ import type { Manga } from "./store";
 
 const LOCAL_MANGAS_DIR = path.join(process.cwd(), "public", "mangas");
 const LOCAL_DATA_FILE = path.join(LOCAL_MANGAS_DIR, "data.json");
+const LOCAL_PRIVATE_DIR = path.join(process.cwd(), ".data");
 const DATA_KEY = "mangas/data.json";
 
 export type StorageDriver = "local" | "s3";
@@ -120,6 +121,52 @@ export async function writeMangaCatalog(mangas: Manga[]): Promise<void> {
     new PutObjectCommand({
       Bucket: getBucketName(),
       Key: getS3Key(DATA_KEY),
+      Body: body,
+      ContentType: "application/json; charset=utf-8",
+    })
+  );
+}
+
+export async function readPrivateJson<T>(key: string, fallback: T): Promise<T> {
+  if (getStorageDriver() === "local") {
+    const localPath = path.join(LOCAL_PRIVATE_DIR, key);
+    if (!fs.existsSync(localPath)) return fallback;
+    try {
+      return JSON.parse(fs.readFileSync(localPath, "utf-8"));
+    } catch {
+      return fallback;
+    }
+  }
+
+  try {
+    const res = await getS3Client().send(
+      new GetObjectCommand({
+        Bucket: getBucketName(),
+        Key: getS3Key(key),
+      })
+    );
+    return JSON.parse(await streamToString(res.Body));
+  } catch (err) {
+    const error = err as { name?: string; $metadata?: { httpStatusCode?: number } };
+    if (error.name === "NoSuchKey" || error.$metadata?.httpStatusCode === 404) return fallback;
+    throw err;
+  }
+}
+
+export async function writePrivateJson<T>(key: string, value: T): Promise<void> {
+  const body = JSON.stringify(value, null, 2);
+
+  if (getStorageDriver() === "local") {
+    const localPath = path.join(LOCAL_PRIVATE_DIR, key);
+    fs.mkdirSync(path.dirname(localPath), { recursive: true });
+    fs.writeFileSync(localPath, body);
+    return;
+  }
+
+  await getS3Client().send(
+    new PutObjectCommand({
+      Bucket: getBucketName(),
+      Key: getS3Key(key),
       Body: body,
       ContentType: "application/json; charset=utf-8",
     })

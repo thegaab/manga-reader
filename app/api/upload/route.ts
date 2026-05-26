@@ -11,6 +11,7 @@ import {
   uploadObject,
   uploadPagesFromDirectory,
 } from "@/lib/storage";
+import { getCurrentUser } from "@/lib/auth";
 import fs from "fs";
 
 function createTempMangaDir(id: string): string {
@@ -20,6 +21,9 @@ function createTempMangaDir(id: string): string {
 }
 
 export async function POST(req: NextRequest) {
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: "Nao autenticado." }, { status: 401 });
+
   const id = uuidv4();
   const tempDir = createTempMangaDir(id);
 

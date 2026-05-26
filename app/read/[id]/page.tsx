@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 
 interface Manga {
   id: string;
@@ -14,6 +14,7 @@ type ReadMode = "single" | "double" | "scroll";
 
 export default function ReaderPage() {
   const params = useParams();
+  const router = useRouter();
   const id = params.id as string;
 
   const [manga, setManga] = useState<Manga | null>(null);
@@ -27,35 +28,41 @@ export default function ReaderPage() {
 
   useEffect(() => {
     async function load() {
-      const [mangaRes, pagesRes] = await Promise.all([
+      const meRes = await fetch("/api/auth/me");
+      if (!meRes.ok) {
+        router.replace("/login");
+        return;
+      }
+
+      const [mangaRes, pagesRes, progressRes] = await Promise.all([
         fetch("/api/manga/" + id),
         fetch("/api/manga/" + id + "/pages"),
+        fetch("/api/progress/" + id),
       ]);
       const mangaData = await mangaRes.json();
       const pagesData = await pagesRes.json();
       setManga(mangaData);
       setPageUrls(pagesData.pages || []);
 
-      // Restore history
-      const h = localStorage.getItem("manga-history");
-      if (h) {
-        const history = JSON.parse(h);
-        if (history[id]) {
-          setCurrentPage(Math.min(history[id].page - 1, (pagesData.pages?.length || 1) - 1));
+      if (progressRes.ok) {
+        const progressData = await progressRes.json();
+        if (progressData.progress) {
+          setCurrentPage(Math.min(progressData.progress.page - 1, (pagesData.pages?.length || 1) - 1));
         }
       }
       setLoading(false);
     }
     load();
-  }, [id]);
+  }, [id, router]);
 
   // Save history
   useEffect(() => {
     if (!manga || pageUrls.length === 0) return;
-    const h = localStorage.getItem("manga-history");
-    const history = h ? JSON.parse(h) : {};
-    history[id] = { page: currentPage + 1, lastRead: new Date().toISOString() };
-    localStorage.setItem("manga-history", JSON.stringify(history));
+    void fetch("/api/progress/" + id, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ page: currentPage + 1 }),
+    });
   }, [currentPage, manga, id, pageUrls.length]);
 
   const goNext = useCallback(() => {
