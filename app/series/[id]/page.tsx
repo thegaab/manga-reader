@@ -25,6 +25,8 @@ interface PublicUser {
   role: "admin" | "reader";
 }
 
+type UploadMode = "pdf" | "images";
+
 interface History {
   [id: string]: { page: number; lastRead: string };
 }
@@ -43,6 +45,13 @@ export default function SeriesPage() {
   const [editCover, setEditCover] = useState<File | null>(null);
   const [editError, setEditError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [uploadMode, setUploadMode] = useState<UploadMode>("pdf");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedImages, setSelectedImages] = useState<File[]>([]);
+  const [chapterTitle, setChapterTitle] = useState("");
+  const [uploadStatus, setUploadStatus] = useState("");
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -108,6 +117,42 @@ export default function SeriesPage() {
     setSaving(false);
   }
 
+  async function handleChapterUpload(e: FormEvent) {
+    e.preventDefault();
+    if (uploadMode === "pdf" && !selectedFile) return;
+    if (uploadMode === "images" && !selectedFile && selectedImages.length === 0) return;
+
+    setUploading(true);
+    setUploadStatus("Enviando capitulo...");
+
+    const formData = new FormData();
+    formData.append("seriesId", id);
+    formData.append("title", chapterTitle || selectedFile?.name.replace(/\.(pdf|zip)$/i, "") || "Sem titulo");
+    if (uploadMode === "pdf" && selectedFile) {
+      formData.append("pdf", selectedFile);
+    } else if (selectedFile) {
+      formData.append("archive", selectedFile);
+    } else {
+      selectedImages.forEach((file) => formData.append("images", file));
+    }
+
+    const res = await fetch("/api/upload", { method: "POST", body: formData });
+    const data = await res.json();
+
+    if (!res.ok || !data.success) {
+      setUploadStatus(data.error || "Nao foi possivel enviar o capitulo.");
+      setUploading(false);
+      return;
+    }
+
+    setSelectedFile(null);
+    setSelectedImages([]);
+    setChapterTitle("");
+    setShowUploadModal(false);
+    setUploading(false);
+    await fetchSeries();
+  }
+
   const formatDate = (iso: string) =>
     new Date(iso).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
 
@@ -141,9 +186,14 @@ export default function SeriesPage() {
               <h1>{series.title}</h1>
               <p>{mangas.length} capitulos</p>
               {canEdit && (
-                <button type="button" className="series-edit-button" onClick={() => setShowEditModal(true)}>
-                  Editar serie
-                </button>
+                <div className="series-actions">
+                  <button type="button" className="series-edit-button" onClick={() => setShowUploadModal(true)}>
+                    Adicionar capitulo
+                  </button>
+                  <button type="button" className="series-edit-button" onClick={() => setShowEditModal(true)}>
+                    Editar serie
+                  </button>
+                </div>
               )}
             </div>
           </div>
@@ -196,6 +246,41 @@ export default function SeriesPage() {
             <div className="modal-actions">
               <button type="button" onClick={() => setShowEditModal(false)} disabled={saving}>Cancelar</button>
               <button type="submit" disabled={saving}>{saving ? "Salvando..." : "Salvar"}</button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {showUploadModal && (
+        <div className="modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget && !uploading) setShowUploadModal(false); }}>
+          <form className="modal-panel upload-panel" onSubmit={handleChapterUpload}>
+            <div className="modal-title">Adicionar capitulo</div>
+            <div className="upload-tabs">
+              <button type="button" onClick={() => setUploadMode("pdf")} disabled={uploading}
+                className={uploadMode === "pdf" ? "active" : ""}>PDF</button>
+              <button type="button" onClick={() => setUploadMode("images")} disabled={uploading}
+                className={uploadMode === "images" ? "active" : ""}>Pasta / ZIP</button>
+            </div>
+            <input className="title-input" type="text" placeholder="Titulo do capitulo" value={chapterTitle}
+              onChange={(e) => setChapterTitle(e.target.value)}
+            />
+            <label className="cover-input">
+              <span>{selectedFile ? selectedFile.name : selectedImages.length > 0 ? `${selectedImages.length} imagens selecionadas` : uploadMode === "pdf" ? "Selecionar PDF" : "Selecionar ZIP"}</span>
+              <input type="file" accept={uploadMode === "pdf" ? ".pdf,application/pdf" : ".zip,application/zip,application/x-zip-compressed"}
+                onChange={(e) => {
+                  const file = e.target.files?.[0] || null;
+                  setSelectedFile(file);
+                  setSelectedImages([]);
+                  if (file && !chapterTitle) setChapterTitle(file.name.replace(/\.(pdf|zip)$/i, ""));
+                }}
+              />
+            </label>
+            {uploadStatus && <div className="upload-status">{uploadStatus}</div>}
+            <div className="modal-actions">
+              <button type="button" onClick={() => setShowUploadModal(false)} disabled={uploading}>Cancelar</button>
+              <button type="submit" disabled={uploading || (uploadMode === "pdf" ? !selectedFile : !selectedFile && selectedImages.length === 0)}>
+                {uploading ? "Processando..." : "Fazer upload"}
+              </button>
             </div>
           </form>
         </div>

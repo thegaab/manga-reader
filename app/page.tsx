@@ -262,6 +262,19 @@ export default function Home() {
   const lastReadEntry = Object.entries(history)
     .sort(([, a], [, b]) => new Date(b.lastRead).getTime() - new Date(a.lastRead).getTime())[0];
   const lastReadManga = lastReadEntry ? mangas.find((manga) => manga.id === lastReadEntry[0]) : null;
+  const sortedMangas = [...mangas].sort((a, b) => new Date(a.uploadedAt).getTime() - new Date(b.uploadedAt).getTime());
+  const lastReadWasCompleted = lastReadManga ? (history[lastReadManga.id]?.page || 0) >= lastReadManga.pages : false;
+  const nextManga = lastReadManga && lastReadWasCompleted
+    ? sortedMangas.find((manga) => {
+      if (lastReadManga.seriesId && manga.seriesId !== lastReadManga.seriesId) return false;
+      if (!lastReadManga.seriesId && manga.seriesId) return false;
+      const comesAfter = new Date(manga.uploadedAt).getTime() > new Date(lastReadManga.uploadedAt).getTime();
+      const isRead = (history[manga.id]?.page || 0) >= manga.pages;
+      return comesAfter && !isRead;
+    }) || null
+    : null;
+  const continueManga = nextManga || lastReadManga;
+  const readChapters = mangas.filter((manga) => (history[manga.id]?.page || 0) >= manga.pages).length;
 
   const formatDate = (iso: string) =>
     new Date(iso).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
@@ -336,15 +349,18 @@ export default function Home() {
             <strong>{series.length}</strong>
             <p>na sua colecao</p>
           </div>
-          <Link className="stat-card continue-card" href={lastReadManga ? "/read/" + lastReadManga.id : "#"}>
-            <span>Continuar leitura</span>
-            <strong>{lastReadManga ? "p." + history[lastReadManga.id].page : "-"}</strong>
-            <p>{lastReadManga ? lastReadManga.title : "nenhuma leitura ainda"}</p>
+          <Link className="stat-card continue-card" href={continueManga ? "/read/" + continueManga.id : "#"}>
+            {continueManga && <img src={continueManga.coverPage} alt="" />}
+            <div>
+              <span>{nextManga ? "Proximo capitulo" : "Continuar leitura"}</span>
+              <strong>{continueManga ? (history[continueManga.id] ? "p." + history[continueManga.id].page : "Novo") : "-"}</strong>
+              <p>{continueManga ? continueManga.title : "nenhuma leitura ainda"}</p>
+            </div>
           </Link>
           <div className="stat-card">
-            <span>Em leitura</span>
-            <strong>{activeReads}</strong>
-            <p>em progresso</p>
+            <span>Capitulos lidos</span>
+            <strong>{readChapters}</strong>
+            <p>concluidos</p>
           </div>
         </section>
 

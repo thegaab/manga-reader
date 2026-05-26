@@ -298,8 +298,23 @@ button, input {
 }
 
 .continue-card {
-  display: block;
+  display: grid;
+  grid-template-columns: 62px minmax(0, 1fr);
+  gap: 0.85rem;
+  align-items: center;
   text-decoration: none;
+}
+
+.continue-card img {
+  width: 62px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 14px;
+  background: #202026;
+}
+
+.continue-card div {
+  min-width: 0;
 }
 
 .continue-card p {
@@ -658,12 +673,37 @@ button, input {
   cursor: pointer;
 }
 
+.series-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: 1rem;
+}
+
+.series-actions .series-edit-button {
+  margin-top: 0;
+}
+
 .modal-actions {
   margin-top: 1rem;
 }
 
 .modal-actions button {
   flex: 1;
+}
+
+.reader-next-chapter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent);
+  border: none;
+  color: #fff;
+  padding: 0.5rem 1.25rem;
+  font-family: var(--font-display), sans-serif;
+  font-size: 1rem;
+  letter-spacing: 0.08em;
+  text-decoration: none;
 }
 
 @media (hover: none) {

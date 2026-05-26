@@ -6,8 +6,10 @@ import { useParams, useRouter } from "next/navigation";
 
 interface Manga {
   id: string;
+  seriesId?: string;
   title: string;
   pages: number;
+  uploadedAt: string;
 }
 
 type ReadMode = "single" | "double" | "scroll";
@@ -24,6 +26,7 @@ export default function ReaderPage() {
   const [readMode, setReadMode] = useState<ReadMode>("single");
   const [showUI, setShowUI] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
+  const [seriesMangas, setSeriesMangas] = useState<Manga[]>([]);
   const uiTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -43,6 +46,14 @@ export default function ReaderPage() {
       const pagesData = await pagesRes.json();
       setManga(mangaData);
       setPageUrls(pagesData.pages || []);
+      setCurrentPage(0);
+      if (mangaData.seriesId) {
+        const seriesRes = await fetch("/api/series/" + mangaData.seriesId + "/manga");
+        if (seriesRes.ok) {
+          const seriesData = await seriesRes.json();
+          setSeriesMangas(seriesData.mangas || []);
+        }
+      }
 
       if (progressRes.ok) {
         const progressData = await progressRes.json();
@@ -112,6 +123,11 @@ export default function ReaderPage() {
 
   const totalPages = pageUrls.length;
   const progress = ((currentPage + 1) / totalPages) * 100;
+  const sortedSeriesMangas = [...seriesMangas].sort((a, b) => new Date(a.uploadedAt).getTime() - new Date(b.uploadedAt).getTime());
+  const currentSeriesIndex = sortedSeriesMangas.findIndex((item) => item.id === manga.id);
+  const nextChapter = currentSeriesIndex >= 0 ? sortedSeriesMangas[currentSeriesIndex + 1] : null;
+  const backHref = manga.seriesId ? "/series/" + manga.seriesId : "/";
+  const isFinished = currentPage >= totalPages - 1;
 
   return (
     <div className="reader-root" style={{ minHeight: "100vh", background: "#000", position: "relative", cursor: "none" }}
@@ -126,11 +142,11 @@ export default function ReaderPage() {
         transition: "opacity 0.3s", opacity: showUI ? 1 : 0, pointerEvents: showUI ? "auto" : "none",
       }}>
         <div className="reader-title-area" style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-          <Link href="/" style={{
+          <Link href={backHref} style={{
             color: "var(--text-muted)", textDecoration: "none",
             fontFamily: "'Space Mono', monospace", fontSize: "0.8rem",
             display: "flex", alignItems: "center", gap: "0.5rem",
-          }}>← BIBLIOTECA</Link>
+          }}>← VOLTAR</Link>
           <div style={{ width: 1, height: 16, background: "var(--border)" }} />
           <span className="reader-title" style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: "1.1rem", letterSpacing: "0.08em" }}>
             {manga.title}
@@ -222,14 +238,20 @@ export default function ReaderPage() {
             style={{ width: "200px", accentColor: "var(--accent)", cursor: "pointer" }} />
         </div>
 
-        <button className="reader-nav-btn" onClick={goNext} disabled={currentPage >= totalPages - 1}
-          style={{
-            background: currentPage >= totalPages - 1 ? "rgba(255,255,255,0.1)" : "var(--accent)",
-            border: "none", color: "#fff", padding: "0.5rem 1.25rem",
-            fontFamily: "'Bebas Neue', sans-serif", fontSize: "1rem",
-            cursor: currentPage >= totalPages - 1 ? "not-allowed" : "pointer",
-            opacity: currentPage >= totalPages - 1 ? 0.3 : 1, letterSpacing: "0.08em",
-          }}>PRÓXIMA →</button>
+        {isFinished && nextChapter ? (
+          <Link className="reader-nav-btn reader-next-chapter" href={"/read/" + nextChapter.id}>
+            PROXIMO CAPITULO →
+          </Link>
+        ) : (
+          <button className="reader-nav-btn" onClick={goNext} disabled={currentPage >= totalPages - 1}
+            style={{
+              background: currentPage >= totalPages - 1 ? "rgba(255,255,255,0.1)" : "var(--accent)",
+              border: "none", color: "#fff", padding: "0.5rem 1.25rem",
+              fontFamily: "'Bebas Neue', sans-serif", fontSize: "1rem",
+              cursor: currentPage >= totalPages - 1 ? "not-allowed" : "pointer",
+              opacity: currentPage >= totalPages - 1 ? 0.3 : 1, letterSpacing: "0.08em",
+            }}>PRÓXIMA →</button>
+        )}
       </div>
     </div>
   );
