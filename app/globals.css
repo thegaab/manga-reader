@@ -214,6 +214,10 @@ button, input {
   padding: 1.4rem;
 }
 
+.welcome-card:only-child {
+  grid-column: 1 / -1;
+}
+
 .welcome-card p,
 .stat-card span,
 .welcome-card span,

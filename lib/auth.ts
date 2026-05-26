@@ -9,18 +9,22 @@ const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 30;
 const PASSWORD_ITERATIONS = 210000;
 const PASSWORD_KEY_LENGTH = 32;
 
+export type UserRole = "admin" | "reader";
+
 export interface User {
   id: string;
   name: string;
   email: string;
   passwordHash: string;
   createdAt: string;
+  role?: UserRole;
 }
 
 export interface PublicUser {
   id: string;
   name: string;
   email: string;
+  role: UserRole;
 }
 
 export interface ReadingProgress {
@@ -59,6 +63,7 @@ function toPublicUser(user: User): PublicUser {
     id: user.id,
     name: user.name,
     email: user.email,
+    role: user.role || "reader",
   };
 }
 
@@ -91,7 +96,9 @@ function verifyPassword(password: string, storedHash: string): boolean {
 async function readAuthStore(): Promise<AuthStore> {
   const store = await readPrivateJson<AuthStore>(AUTH_STORE_KEY, emptyStore);
   return {
-    users: Array.isArray(store.users) ? store.users : [],
+    users: Array.isArray(store.users)
+      ? store.users.map((user) => ({ ...user, role: user.role || "reader" }))
+      : [],
     sessions: Array.isArray(store.sessions) ? store.sessions : [],
     progress: Array.isArray(store.progress) ? store.progress : [],
   };
@@ -118,6 +125,7 @@ export async function registerUser(name: string, email: string, password: string
     name: cleanName,
     email: cleanEmail,
     passwordHash: hashPassword(password),
+    role: "reader",
     createdAt: new Date().toISOString(),
   };
 
@@ -171,6 +179,25 @@ export async function getCurrentUser(): Promise<PublicUser | null> {
 
   const user = store.users.find((candidate) => candidate.id === session.userId);
   return user ? toPublicUser(user) : null;
+}
+
+export function canWrite(user: PublicUser | null): boolean {
+  return user?.role === "admin";
+}
+
+export async function requireAdmin(): Promise<PublicUser | null> {
+  const user = await getCurrentUser();
+  return canWrite(user) ? user : null;
+}
+
+export async function updateUserRole(userId: string, role: UserRole): Promise<PublicUser | null> {
+  const store = await readAuthStore();
+  const user = store.users.find((candidate) => candidate.id === userId);
+  if (!user) return null;
+
+  user.role = role;
+  await writeAuthStore(store);
+  return toPublicUser(user);
 }
 
 export function sessionCookieName(): string {

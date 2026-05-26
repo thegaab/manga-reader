@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getManga, deleteManga } from "@/lib/store";
 import { deleteMangaObjects } from "@/lib/storage";
-import { getCurrentUser } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth";
 
 export async function GET(
   _req: NextRequest,
@@ -17,8 +17,8 @@ export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Nao autenticado." }, { status: 401 });
+  const user = await requireAdmin();
+  if (!user) return NextResponse.json({ error: "Sem permissao para remover mangas." }, { status: 403 });
 
   const { id } = await params;
   const manga = await getManga(id);

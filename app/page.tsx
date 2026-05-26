@@ -20,6 +20,7 @@ interface PublicUser {
   id: string;
   name: string;
   email: string;
+  role: "admin" | "reader";
 }
 
 type UploadMode = "pdf" | "images";
@@ -226,6 +227,7 @@ export default function Home() {
   const filtered = mangas.filter((m) => m.title.toLowerCase().includes(search.toLowerCase()));
   const totalPages = mangas.reduce((a, m) => a + m.pages, 0);
   const activeReads = Object.keys(history).length;
+  const canManageMangas = user?.role === "admin";
 
   const formatDate = (iso: string) =>
     new Date(iso).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
@@ -267,7 +269,9 @@ export default function Home() {
             <input className="search-input mobile-search" type="text" placeholder="Buscar manga..." value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
-            <button type="button" onClick={() => { setShowUploadModal(true); setShowMobileMenu(false); }}>Adicionar manga</button>
+            {canManageMangas && (
+              <button type="button" onClick={() => { setShowUploadModal(true); setShowMobileMenu(false); }}>Adicionar manga</button>
+            )}
             <button type="button" onClick={handleLogout}>Sair</button>
           </div>
         )}
@@ -284,10 +288,12 @@ export default function Home() {
             <img src="/mangakai-logo.png" alt="" />
           </div>
 
-          <button className="quick-add-card" type="button" onClick={() => setShowUploadModal(true)}>
-            <span>+</span>
-            <strong>Adicionar manga</strong>
-          </button>
+          {canManageMangas && (
+            <button className="quick-add-card" type="button" onClick={() => setShowUploadModal(true)}>
+              <span>+</span>
+              <strong>Adicionar manga</strong>
+            </button>
+          )}
         </section>
 
         <section className="stats-strip">
@@ -336,7 +342,9 @@ export default function Home() {
                       </div>
                     </div>
                   </Link>
-                  <button onClick={(e) => { e.preventDefault(); setDeleteConfirm(manga.id); }} className="delete-btn">x</button>
+                  {canManageMangas && (
+                    <button onClick={(e) => { e.preventDefault(); setDeleteConfirm(manga.id); }} className="delete-btn">x</button>
+                  )}
                 </div>
               );
             })}
