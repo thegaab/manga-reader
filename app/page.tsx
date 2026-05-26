@@ -257,9 +257,11 @@ export default function Home() {
   const filteredSeries = series.filter((item) => item.title.toLowerCase().includes(search.toLowerCase()));
   const looseMangas = mangas.filter((manga) => !manga.seriesId);
   const filteredLooseMangas = looseMangas.filter((m) => m.title.toLowerCase().includes(search.toLowerCase()));
-  const totalPages = mangas.reduce((a, m) => a + m.pages, 0);
   const activeReads = Object.keys(history).length;
   const canManageMangas = user?.role === "admin";
+  const lastReadEntry = Object.entries(history)
+    .sort(([, a], [, b]) => new Date(b.lastRead).getTime() - new Date(a.lastRead).getTime())[0];
+  const lastReadManga = lastReadEntry ? mangas.find((manga) => manga.id === lastReadEntry[0]) : null;
 
   const formatDate = (iso: string) =>
     new Date(iso).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
@@ -329,17 +331,21 @@ export default function Home() {
         </section>
 
         <section className="stats-strip">
-          {[
-            { val: series.length, label: "Series", hint: "na sua colecao" },
-            { val: totalPages, label: "Paginas totais", hint: "adicionadas" },
-            { val: activeReads, label: "Em leitura", hint: "em progresso" },
-          ].map((s) => (
-            <div className="stat-card" key={s.label}>
-              <span>{s.label}</span>
-              <strong>{s.val}</strong>
-              <p>{s.hint}</p>
-            </div>
-          ))}
+          <div className="stat-card">
+            <span>Series</span>
+            <strong>{series.length}</strong>
+            <p>na sua colecao</p>
+          </div>
+          <Link className="stat-card continue-card" href={lastReadManga ? "/read/" + lastReadManga.id : "#"}>
+            <span>Continuar leitura</span>
+            <strong>{lastReadManga ? "p." + history[lastReadManga.id].page : "-"}</strong>
+            <p>{lastReadManga ? lastReadManga.title : "nenhuma leitura ainda"}</p>
+          </Link>
+          <div className="stat-card">
+            <span>Em leitura</span>
+            <strong>{activeReads}</strong>
+            <p>em progresso</p>
+          </div>
         </section>
 
         {filteredSeries.length === 0 && filteredLooseMangas.length === 0 && search ? (
