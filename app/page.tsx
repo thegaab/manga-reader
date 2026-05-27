@@ -301,6 +301,8 @@ export default function Home() {
           <input className="search-input" type="text" placeholder="Buscar manga..." value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
+          <Link className="nav-ghost" href="/profile">Perfil</Link>
+          {user?.role === "admin" && <Link className="nav-ghost" href="/admin">Admin</Link>}
           <button className="nav-user" type="button">{user?.name?.slice(0, 1).toUpperCase() || "U"}</button>
           <button className="nav-ghost" type="button" onClick={handleLogout}>Sair</button>
         </div>
@@ -319,6 +321,8 @@ export default function Home() {
             {canManageMangas && (
               <button type="button" onClick={() => { setShowUploadModal(true); setShowMobileMenu(false); }}>Adicionar manga</button>
             )}
+            <Link href="/profile">Perfil</Link>
+            {user?.role === "admin" && <Link href="/admin">Admin</Link>}
             <button type="button" onClick={handleLogout}>Sair</button>
           </div>
         )}

@@ -11,7 +11,12 @@ import {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const user = await registerUser(String(body.name || ""), String(body.email || ""), String(body.password || ""));
+    const user = await registerUser(
+      String(body.name || ""),
+      String(body.email || ""),
+      String(body.password || ""),
+      String(body.inviteCode || "")
+    );
     const token = await createSession(user.id);
     const cookieStore = await cookies();
     cookieStore.set(sessionCookieName(), token, {
