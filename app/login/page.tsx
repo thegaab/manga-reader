@@ -72,6 +72,9 @@ export default function LoginPage() {
         <Link href="/register" style={{ color: "var(--text-muted)", fontFamily: "'Space Mono', monospace", fontSize: "0.75rem", textAlign: "center" }}>
           Criar usuario
         </Link>
+        <Link href="/reset-password" style={{ color: "var(--text-muted)", fontFamily: "'Space Mono', monospace", fontSize: "0.75rem", textAlign: "center" }}>
+          Redefinir senha
+        </Link>
       </form>
     </main>
   );
