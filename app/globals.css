@@ -149,6 +149,11 @@ button, input {
   border-radius: 50%;
   background: rgba(232,64,42,0.12);
   color: var(--accent2);
+  display: grid;
+  place-items: center;
+  line-height: 1;
+  padding: 0;
+  flex-shrink: 0;
 }
 
 .nav-ghost {
@@ -400,6 +405,41 @@ button, input {
   color: #fff;
   font-family: var(--font-display), sans-serif;
   font-size: 0.72rem;
+}
+
+.chapter-number-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(13,13,15,0.82);
+  color: var(--text);
+  border: 1px solid rgba(255,255,255,0.14);
+  font-family: var(--font-mono), monospace;
+  font-size: 0.7rem;
+}
+
+.chapter-admin-actions {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.35rem;
+  margin-top: 0.45rem;
+}
+
+.chapter-admin-actions button {
+  min-height: 34px;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  background: #17171b;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.72rem;
+}
+
+.chapter-admin-actions button:hover {
+  border-color: rgba(232,64,42,0.55);
+  color: var(--accent2);
 }
 
 .manga-info {
@@ -808,6 +848,348 @@ button, input {
   color: var(--accent2);
   font-family: var(--font-mono), monospace;
   word-break: break-all;
+}
+
+.admin-screen {
+  background: #0d0d0f;
+}
+
+.admin-topbar {
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.admin-tabs {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.admin-tabs a {
+  color: var(--text-muted);
+  padding: 0.45rem 0.65rem;
+  border-radius: 9px;
+  text-decoration: none;
+  font-size: 0.82rem;
+}
+
+.admin-tabs a.active {
+  color: var(--accent2);
+  background: transparent;
+}
+
+.admin-tabs a:hover {
+  color: var(--text);
+  background: rgba(255,255,255,0.05);
+}
+
+.admin-main {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 1.5rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.admin-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.admin-summary-card,
+.admin-panel,
+.profile-panel {
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  background: #171718;
+}
+
+.admin-summary-card {
+  min-height: 72px;
+  display: grid;
+  place-items: center;
+  text-align: center;
+}
+
+.admin-summary-card strong {
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.admin-summary-card span {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.admin-panel,
+.profile-panel {
+  padding: 1.25rem;
+}
+
+.admin-panel-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+}
+
+.admin-panel h1,
+.admin-panel h2,
+.profile-panel h1,
+.profile-panel h2 {
+  font-size: 1rem;
+  margin: 0 0 0.25rem;
+}
+
+.admin-panel p,
+.profile-panel p {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
+.admin-primary-button {
+  min-height: 38px;
+  padding: 0 1rem;
+  border: 0;
+  border-radius: 10px;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+}
+
+.admin-toolbar,
+.admin-invite-actions {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 1rem;
+}
+
+.admin-toolbar input,
+.admin-toolbar select,
+.admin-invite-actions select,
+.admin-user-row select {
+  min-height: 40px;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 10px;
+  background: #202026;
+  color: var(--text);
+  padding: 0 0.85rem;
+}
+
+.admin-toolbar input {
+  flex: 1;
+}
+
+.admin-user-list,
+.admin-invite-list,
+.session-list {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.admin-user-row,
+.admin-invite-row,
+.session-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto auto auto;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.85rem 0;
+}
+
+.admin-user-row + .admin-user-row,
+.admin-invite-row + .admin-invite-row,
+.session-row + .session-row {
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+.admin-avatar,
+.profile-avatar {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #6f45d8;
+  color: #fff;
+  font-family: var(--font-mono), monospace;
+}
+
+.admin-user-info {
+  display: grid;
+  min-width: 0;
+}
+
+.admin-user-info strong,
+.admin-user-info span,
+.admin-invite-row strong,
+.admin-invite-row span,
+.session-row strong,
+.session-row span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-user-info span,
+.admin-invite-row span,
+.session-row span {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
+.admin-user-row button {
+  min-height: 34px;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 8px;
+  background: #202026;
+  color: var(--text);
+  padding: 0 0.65rem;
+  cursor: pointer;
+}
+
+.admin-pill {
+  width: fit-content;
+  padding: 0.22rem 0.55rem;
+  border-radius: 7px;
+  background: #222228;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+}
+
+.admin-pill.green {
+  color: #45de7a;
+  background: rgba(69,222,122,0.12);
+}
+
+.admin-pill.red {
+  color: var(--accent2);
+  background: rgba(232,64,42,0.16);
+}
+
+.profile-main {
+  max-width: 980px;
+}
+
+.profile-identity {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.profile-avatar {
+  position: relative;
+  width: 54px;
+  height: 54px;
+  font-size: 1.1rem;
+}
+
+.profile-avatar span {
+  position: absolute;
+  right: -2px;
+  bottom: 1px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.profile-form {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 1rem;
+}
+
+.profile-form label {
+  color: var(--text-muted);
+  font-size: 0.84rem;
+}
+
+.profile-form input {
+  min-height: 42px;
+  border: 1px solid rgba(255,255,255,0.13);
+  border-radius: 9px;
+  background: #242425;
+  color: var(--text);
+  padding: 0 0.85rem;
+}
+
+.profile-form input:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+.profile-form button {
+  min-height: 44px;
+  margin-top: 0.45rem;
+  border: 0;
+  border-radius: 9px;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+}
+
+.password-meter {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.password-meter span {
+  height: 4px;
+  border-radius: 99px;
+  background: #2b2b2f;
+}
+
+.password-meter span.active {
+  background: #45de7a;
+}
+
+.profile-form small {
+  color: #45de7a;
+  font-size: 0.72rem;
+}
+
+.session-row {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+.session-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: #242425;
+}
+
+.session-row > div:nth-child(2) {
+  display: grid;
+}
+
+.session-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #45de7a;
+}
+
+.danger-outline {
+  width: 100%;
+  min-height: 38px;
+  margin-top: 1rem;
+  border: 1px solid rgba(232,64,42,0.35);
+  border-radius: 9px;
+  background: transparent;
+  color: var(--accent2);
+  cursor: pointer;
 }
 
 .reader-next-chapter {
@@ -1354,5 +1736,50 @@ button, input {
   .admin-actions,
   .admin-list-row {
     grid-template-columns: 1fr;
+  }
+
+  .admin-topbar {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 1rem;
+  }
+
+  .admin-tabs {
+    width: 100%;
+    margin-left: 0;
+    overflow-x: auto;
+    padding-bottom: 0.25rem;
+  }
+
+  .admin-main {
+    padding: 1rem;
+  }
+
+  .admin-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-panel-head,
+  .admin-toolbar,
+  .admin-invite-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .admin-user-row,
+  .admin-invite-row {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .admin-user-row select,
+  .admin-user-row button,
+  .admin-user-row .admin-pill,
+  .admin-invite-row .admin-pill {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .profile-identity {
+    align-items: flex-start;
   }
 }
