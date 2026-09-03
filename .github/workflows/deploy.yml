@@ -1,0 +1,28 @@
+name: EC2 deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Initiate EC2 deploy
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd /home/ec2-user/manga-reader
+            git pull origin main
+            
+            # Atualiza dependências e faz o build do projeto
+            npm install
+            npm run build
+            
+            # Reinicia a aplicação (ajuste o comando se não usar PM2)
+            pm2 restart all
