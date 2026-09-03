@@ -1,28 +1,33 @@
-name: EC2 deploy
+name: Deploy na EC2
 
 on:
   push:
     branches:
-      - main
+      - main # ou master
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Initiate EC2 deploy
+      - name: Executar Deploy na EC2
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
+            # Carrega o NVM e força o uso do Node 20
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            nvm use 20
+
             cd /home/ec2-user/manga-reader
             git pull origin main
             
-            # Atualiza dependências e faz o build do projeto
             npm install
             npm run build
             
-            # Reinicia a aplicação (ajuste o comando se não usar PM2)
-            pm2 restart all
+            # Garante que o PM2 seja encontrado e reinicie o app
+            export PATH=$PATH:$(npm bin -g)
+            pm2 restart all || pm2 start npm --name "manga-reader" -- start
