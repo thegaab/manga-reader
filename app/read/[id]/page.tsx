@@ -128,6 +128,12 @@ export default function ReaderPage() {
   const nextChapter = currentSeriesIndex >= 0 ? sortedSeriesMangas[currentSeriesIndex + 1] : null;
   const backHref = manga.seriesId ? "/series/" + manga.seriesId : "/";
   const isFinished = currentPage >= totalPages - 1;
+  const visiblePages = readMode === "double" && pageUrls[currentPage + 1]
+    ? [
+      { url: pageUrls[currentPage + 1], pageNumber: currentPage + 2 },
+      { url: pageUrls[currentPage], pageNumber: currentPage + 1 },
+    ]
+    : [{ url: pageUrls[currentPage], pageNumber: currentPage + 1 }];
 
   return (
     <div className="reader-root" style={{ minHeight: "100vh", background: "#000", position: "relative", cursor: "none" }}
@@ -201,15 +207,20 @@ export default function ReaderPage() {
             cursor: "e-resize", zIndex: 50,
           }} />
 
-          <img className="reader-page-img" src={pageUrls[currentPage]} alt={"Página " + (currentPage + 1)}
-            style={{
-              maxHeight: "100vh", maxWidth: readMode === "double" ? "50vw" : "100vw",
-              objectFit: "contain", userSelect: "none",
-            }} />
-          {readMode === "double" && pageUrls[currentPage + 1] && (
-            <img className="reader-page-img reader-page-img-double" src={pageUrls[currentPage + 1]} alt={"Página " + (currentPage + 2)}
-              style={{ maxHeight: "100vh", maxWidth: "50vw", objectFit: "contain", userSelect: "none" }} />
-          )}
+          {visiblePages.map(({ url, pageNumber }, index) => (
+            <img
+              key={pageNumber}
+              className={"reader-page-img" + (index > 0 ? " reader-page-img-double" : "")}
+              src={url}
+              alt={"Página " + pageNumber}
+              style={{
+                maxHeight: "100vh",
+                maxWidth: readMode === "double" ? "50vw" : "100vw",
+                objectFit: "contain",
+                userSelect: "none",
+              }}
+            />
+          ))}
         </div>
       )}
 
